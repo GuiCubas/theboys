@@ -8,7 +8,7 @@
 typedef struct
 {
     void *campo1;       // Ponteiro genérico para campo genérico, normalmente herói
-    void *campo2;       //--, normalmente base
+    void *campo2;       //---, normalmente base
 } evento;
 
 evento *cria_evento (void *campo1, void *campo2)
@@ -16,10 +16,10 @@ evento *cria_evento (void *campo1, void *campo2)
     //cria e inicializa o evento com esses campos ai
 }
 
-void chega (mundo *w, evento *ev)
+void chega (mundo_t *w, evento *ev)
 {
-    heroi *h = ev->campo1;
-    base *b = ev->campo2;
+    heroi_t *h = ev->campo1;
+    base_t *b = ev->campo2;
     bool espera;
 
     h->base = b->id;
@@ -32,10 +32,10 @@ void chega (mundo *w, evento *ev)
     fprio_insere(w->lef, novo_ev, tipo, w->relogio);
 }
 
-void espera (mundo *w, evento *ev)
+void espera (mundo_t *w, evento *ev)
 {
-    heroi *h = ev->campo1;
-    base *b = ev->campo2;
+    heroi_t *h = ev->campo1;
+    base_t *b = ev->campo2;
 
     fila_insere (b->espera, h);
 
@@ -43,22 +43,21 @@ void espera (mundo *w, evento *ev)
     fprio_insere(w->lef, novo_ev, AVISA, w->relogio);
 }
 
-void desiste (mundo *w, evento *ev)
+void desiste (mundo_t *w, evento *ev)
 {
-    heroi *h = ev->campo1;
-
-    base *d = base_aleat();
+    heroi_t *h = ev->campo1;
+    base_t *d = base_aleat();
 
     evento *novo_ev = cria_evento(h, d);
     fprio_insere(w->lef, novo_ev, VIAJA, w->relogio);
 }
 
-void avisa (mundo *w, evento *ev)
+void avisa (mundo_t *w, evento *ev)
 {
-    base *b = ev->campo1;
+    base_t *b = ev->campo1;
 
     while (cjto_card(b->presentes) < b->lotacao) {
-        heroi *h = fila_retira;
+        heroi_t *h = fila_retira(b->espera);
         cjto_insere(b->presentes, h->id);
 
         evento *novo_ev = cria_evento(h, b);
@@ -66,10 +65,10 @@ void avisa (mundo *w, evento *ev)
     }
 }
 
-void entra (mundo *w, evento *ev)
+void entra (mundo_t *w, evento *ev)
 {
-    heroi *h = ev->campo1;
-    base *b = ev->campo2;
+    heroi_t *h = ev->campo1;
+    base_t *b = ev->campo2;
 
     // Calculo do tempo de permanência na base
     int tpb = 15 + h->paciencia * aleat(0, 20);
@@ -78,3 +77,49 @@ void entra (mundo *w, evento *ev)
     fprio_insere(w->lef, novo_ev, SAI, w->relogio + tpb);
 }
 
+void sai (mundo_t *w, evento *ev)
+{
+    heroi_t *h = ev->campo1;
+    base_t *b = ev->campo2;
+
+    cjto_retira(b->presentes, h->id);
+
+    base_t *d = base_aleat();
+    
+    evento *novo_ev = cria_evento(h, d);
+    fprio_insere(w->lef, novo_ev, VIAJA, w->relogio);
+
+    evento *novo_ev2 = cria_evento(b, NULL);
+    fprio_insere(w->lef, novo_ev2, AVISA, w->relogio);
+}
+
+void viaja (mundo_t *w, evento *ev)
+{
+    heroi_t *h = ev->campo1;
+    base_t *d = ev->campo2;
+
+    int dist = dist_cartesiana(w->bases[h->base].loc, d->loc);
+    int duracao = dist / h->velocidade;
+
+    evento *novo_ev = cria_evento(h, d);
+    fprio_insere(w->lef, novo_ev, CHEGA, w->relogio + duracao);
+}
+
+void morre (mundo_t*w, evento *ev)
+{
+    heroi_t *h = ev->campo1;
+    base_t *b = ev->campo2;
+
+    cjto_retira(b->presentes, h->id);
+
+    lef_retira(w->lef, h);
+
+    evento *novo_ev = cria_evento(b, NULL);
+    fprio_insere(w->lef, novo_ev, AVISA, w->relogio);
+}
+
+void missao (mundo_t *w, evento *ev)
+{
+    missao_t *m = ev->campo1;
+    
+}
