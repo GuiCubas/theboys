@@ -1,0 +1,7 @@
+#define CHEGA 1
+#define ESPERA 2
+#define DESISTE 3
+#define AVISA 4
+#define VIAJA 5
+#define ENTRA 6
+#define SAI 7

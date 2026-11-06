@@ -1,0 +1,1 @@
+int aleat (min, max);
