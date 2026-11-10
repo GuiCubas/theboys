@@ -1,6 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "entidades.h"
-#include "fprio.h"
+#include "lef.h"
 #include "mundo.h"
 #include "eventos.h"
 #include "utils.h"
@@ -9,14 +10,26 @@ typedef struct
 {
     void *campo1;       // Ponteiro genérico para campo genérico, normalmente herói
     void *campo2;       //---, normalmente base
-} evento;
+} evento_t;
 
-evento *cria_evento (void *campo1, void *campo2)
+// Retorna ponteiro para evento criado com 2 campos
+evento_t *cria_evento (void *campo1, void *campo2)
 {
-    //cria e inicializa o evento com esses campos ai
+    evento_t *evento = malloc(sizeof(evento_t));
+
+    evento->campo1 = campo1;
+    evento->campo2 = campo2;
+
+    return(evento);
 }
 
-void chega (mundo_t *w, evento *ev)
+// Libera a memória alocada para esse evento
+void destroi_evento (evento_t *evento)
+{
+    free(evento);
+}
+
+void chega (mundo_t *w, evento_t *ev)
 {
     heroi_t *h = ev->campo1;
     base_t *b = ev->campo2;
@@ -24,35 +37,41 @@ void chega (mundo_t *w, evento *ev)
 
     h->base = b->id;
 
-    espera = (!fprio_tamanho(b->espera)) ? true : h->paciencia > (10 * fprio_tamanho(b->espera));
+    espera = (!lef_tamanho(b->espera)) ? true : h->paciencia > (10 * lef_tamanho(b->espera));
 
-    evento *novo_ev = cria_evento(h, b);
+    evento_t *novo_ev = cria_evento(h, b);
 
     int tipo = (espera && b->estado) ? ESPERA : DESISTE;
-    fprio_insere(w->lef, novo_ev, tipo, w->relogio);
+    lef_insere(w->lef, novo_ev, tipo, w->relogio);
+
+    destroi_evento(ev);
 }
 
-void espera (mundo_t *w, evento *ev)
+void espera (mundo_t *w, evento_t *ev)
 {
     heroi_t *h = ev->campo1;
     base_t *b = ev->campo2;
 
     fila_insere (b->espera, h);
 
-    evento *novo_ev = cria_evento(b, NULL);
-    fprio_insere(w->lef, novo_ev, AVISA, w->relogio);
+    evento_t *novo_ev = cria_evento(b, NULL);
+    lef_insere(w->lef, novo_ev, AVISA, w->relogio);
+
+    destroi_evento(ev);
 }
 
-void desiste (mundo_t *w, evento *ev)
+void desiste (mundo_t *w, evento_t *ev)
 {
     heroi_t *h = ev->campo1;
     base_t *d = base_aleat();
 
-    evento *novo_ev = cria_evento(h, d);
-    fprio_insere(w->lef, novo_ev, VIAJA, w->relogio);
+    evento_t *novo_ev = cria_evento(h, d);
+    lef_insere(w->lef, novo_ev, VIAJA, w->relogio);
+
+    destroi_evento(ev);
 }
 
-void avisa (mundo_t *w, evento *ev)
+void avisa (mundo_t *w, evento_t *ev)
 {
     base_t *b = ev->campo1;
 
@@ -60,12 +79,14 @@ void avisa (mundo_t *w, evento *ev)
         heroi_t *h = fila_retira(b->espera);
         cjto_insere(b->presentes, h->id);
 
-        evento *novo_ev = cria_evento(h, b);
-        fprio_insere(w->lef, novo_ev, ENTRA, w->relogio);
+        evento_t *novo_ev = cria_evento(h, b);
+        lef_insere(w->lef, novo_ev, ENTRA, w->relogio);
     }
+
+    destroi_evento(ev);
 }
 
-void entra (mundo_t *w, evento *ev)
+void entra (mundo_t *w, evento_t *ev)
 {
     heroi_t *h = ev->campo1;
     base_t *b = ev->campo2;
@@ -73,11 +94,13 @@ void entra (mundo_t *w, evento *ev)
     // Calculo do tempo de permanência na base
     int tpb = 15 + h->paciencia * aleat(0, 20);
 
-    evento *novo_ev = cria_evento(h, b);
-    fprio_insere(w->lef, novo_ev, SAI, w->relogio + tpb);
+    evento_t *novo_ev = cria_evento(h, b);
+    lef_insere(w->lef, novo_ev, SAI, w->relogio + tpb);
+
+    destroi_evento(ev);
 }
 
-void sai (mundo_t *w, evento *ev)
+void sai (mundo_t *w, evento_t *ev)
 {
     heroi_t *h = ev->campo1;
     base_t *b = ev->campo2;
@@ -86,14 +109,16 @@ void sai (mundo_t *w, evento *ev)
 
     base_t *d = base_aleat();
     
-    evento *novo_ev = cria_evento(h, d);
-    fprio_insere(w->lef, novo_ev, VIAJA, w->relogio);
+    evento_t *novo_ev = cria_evento(h, d);
+    lef_insere(w->lef, novo_ev, VIAJA, w->relogio);
 
-    evento *novo_ev2 = cria_evento(b, NULL);
-    fprio_insere(w->lef, novo_ev2, AVISA, w->relogio);
+    evento_t *novo_ev2 = cria_evento(b, NULL);
+    lef_insere(w->lef, novo_ev2, AVISA, w->relogio);
+
+    destroi_evento(ev);
 }
 
-void viaja (mundo_t *w, evento *ev)
+void viaja (mundo_t *w, evento_t *ev)
 {
     heroi_t *h = ev->campo1;
     base_t *d = ev->campo2;
@@ -101,25 +126,72 @@ void viaja (mundo_t *w, evento *ev)
     int dist = dist_cartesiana(w->bases[h->base].loc, d->loc);
     int duracao = dist / h->velocidade;
 
-    evento *novo_ev = cria_evento(h, d);
-    fprio_insere(w->lef, novo_ev, CHEGA, w->relogio + duracao);
+    evento_t *novo_ev = cria_evento(h, d);
+    lef_insere(w->lef, novo_ev, CHEGA, w->relogio + duracao);
+
+    destroi_evento(ev);
 }
 
-void morre (mundo_t*w, evento *ev)
+void morre (mundo_t *w, evento_t *ev)
 {
     heroi_t *h = ev->campo1;
-    base_t *b = ev->campo2;
+    base_t *b = &w->bases[h->base];
 
     cjto_retira(b->presentes, h->id);
+    lef_retira_heroi(w->lef, h->id);
 
-    lef_retira(w->lef, h);
+    h->vivo = false;
 
-    evento *novo_ev = cria_evento(b, NULL);
-    fprio_insere(w->lef, novo_ev, AVISA, w->relogio);
+    evento_t *novo_ev = cria_evento(b, NULL);
+    lef_insere(w->lef, novo_ev, AVISA, w->relogio);
+
+    destroi_evento(ev);
 }
 
-void missao (mundo_t *w, evento *ev)
+void missao (mundo_t *w, evento_t *ev)
 {
     missao_t *m = ev->campo1;
-    
+    base_t *bmp = encontra_BMP (m, w);
+
+    m->tentativas++;
+
+    if (!bmp) {
+        evento_t *novo_ev = cria_evento(m, NULL);
+        lef_insere(w->lef, novo_ev, MISSAO, w->relogio + 24*60);
+        destroi_evento(ev);
+        return;
+    }
+
+    int risco;
+
+    for (int i; i < w->nHerois; i++) {
+        heroi_t *h = &w->herois[i];
+        
+        if (cjto_pertence(bmp->presentes, h->id) > 0 && h->estado) {
+            risco = m->perigo / (h->paciencia + h->xp + 1);
+
+            if (risco > aleat(0, 30)) {
+                evento_t *novo_ev2 = cria_evento(h, NULL);
+                lef_insere(w->lef, novo_ev2, MORRE, w->relogio);
+            }
+
+            else 
+                h->xp++;
+        }   
+    }
+
+    destroi_evento(ev);
+}
+
+void invade (mundo_t *w, evento_t *ev)
+{
+    invasao_t *inv = ev->campo1;
+    base_t *b = &w->bases[inv->local];  // Perguntar se passa como campo 2 ou faz assim
+
+    if (!b->estado) {
+        destroi_evento(ev);
+        return;
+    }
+
+
 }

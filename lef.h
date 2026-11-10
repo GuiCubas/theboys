@@ -4,11 +4,11 @@
 
 // NÃO ALTERAR
 
-#ifndef FPRIO
-#define FPRIO
+#ifndef LEF
+#define LEF
 
 // descreve um nodo da fila de prioridades
-struct fpnodo_t
+struct lefnodo_t
 {
 	void *item ;			// item associado ao nodo
 	int   tipo ;			// tipo do item
@@ -17,40 +17,40 @@ struct fpnodo_t
 };
 
 // descreve uma fila de prioridades
-struct fprio_t
+struct lef_t
 {
-	struct fpnodo_t *prim ;	// primeiro nodo da fila
-	struct fpnodo_t *fim;		// último nodo da fila
+	struct lefnodo_t *prim ;	// primeiro nodo da fila
+	struct lefnodo_t *fim;		// último nodo da fila
 	int num ;			// número de itens na fila
 } ;
 
 // Cria uma fila vazia.
 // Retorno: ponteiro para a fila criada ou NULL se erro.
-struct fprio_t *fprio_cria ();
+struct lef_t *lef_cria ();
 
 // Libera todas as estruturas de dados da fila, inclusive os itens.
 // Retorno: NULL.
-struct fprio_t *fprio_destroi (struct fprio_t *f);
+struct lef_t *lef_destroi (struct lef_t *f);
 
 // Insere o item na fila, mantendo-a ordenada por prioridades crescentes.
 // Itens com a mesma prioridade devem respeitar a politica FIFO (retirar
 // na ordem em que inseriu).
 // Inserir duas vezes o mesmo item (o mesmo ponteiro) é um erro.
 // Retorno: número de itens na fila após a operação ou -1 se erro.
-int fprio_insere (struct fprio_t *f, void *item, int tipo, int prio);
+int lef_insere (struct lef_t *f, void *item, int tipo, int prio);
 
 // Retira o primeiro item da fila e o devolve; o tipo e a prioridade
 // do item são devolvidos nos parâmetros "tipo" e "prio".
 // Retorno: ponteiro para o item retirado ou NULL se fila vazia ou erro.
-void *fprio_retira (struct fprio_t *f, int *tipo, int *prio);
+void *lef_retira (struct lef_t *f, int *tipo, int *prio);
 
 // Informa o número de itens na fila.
 // Retorno: N >= 0 ou -1 se erro.
-int fprio_tamanho (struct fprio_t *f);
+int lef_tamanho (struct lef_t *f);
 
 // Imprime o conteúdo da fila no formato "(tipo prio) (tipo prio) ..."
 // Para cada item deve ser impresso seu tipo e sua prioridade, com um
 // espaço entre valores, sem espaços antes ou depois e sem nova linha.
-void fprio_imprime (struct fprio_t *f);
+void lef_imprime (struct lef_t *f);
 
 #endif

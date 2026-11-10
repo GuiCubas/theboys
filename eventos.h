@@ -5,3 +5,5 @@
 #define VIAJA 5
 #define ENTRA 6
 #define SAI 7
+#define MISSAO 8
+#define MORRE 9
