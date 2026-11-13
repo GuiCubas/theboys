@@ -6,12 +6,6 @@
 #include "eventos.h"
 #include "utils.h"
 
-typedef struct
-{
-    void *campo1;       // Ponteiro genérico para campo genérico, normalmente herói
-    void *campo2;       //---, normalmente base
-} evento_t;
-
 // Retorna ponteiro para evento criado com 2 campos
 evento_t *cria_evento (void *campo1, void *campo2)
 {
@@ -24,9 +18,16 @@ evento_t *cria_evento (void *campo1, void *campo2)
 }
 
 // Libera a memória alocada para esse evento
-void destroi_evento (evento_t *evento)
+void destroi_evento (evento_t *ev)
 {
-    free(evento);
+    free(ev);
+}
+
+void agenda_evento (mundo_t *w, void *campo1, void *campo2, int tipo, int time)
+{
+    evento_t *ev = cria_evento(campo1, campo2);
+
+    lef_insere(w->lef, ev, tipo, w->relogio + time);
 }
 
 void chega (mundo_t *w, evento_t *ev)
@@ -39,11 +40,14 @@ void chega (mundo_t *w, evento_t *ev)
 
     espera = (!lef_tamanho(b->espera)) ? true : h->paciencia > (10 * lef_tamanho(b->espera));
 
-    evento_t *novo_ev = cria_evento(h, b);
-
     int tipo = (espera && b->estado) ? ESPERA : DESISTE;
-    lef_insere(w->lef, novo_ev, tipo, w->relogio);
+    agenda_evento (w, h, b, tipo, AGORA);
 
+    if (tipo = ESPERA)
+        printf("%6d: CHEGA HEROI %2d BASE %d (%2d/%2d) ESPERA", w->relogio, h->id, b->id, cjto_card(b->presentes), b->lotacao);
+    else 
+        printf("%6d: CHEGA HEROI %2d BASE %d (%2d/%2d) DESISTE", w->relogio, h->id, b->id, cjto_card(b->presentes), b->lotacao);
+    
     destroi_evento(ev);
 }
 
@@ -54,8 +58,9 @@ void espera (mundo_t *w, evento_t *ev)
 
     fila_insere (b->espera, h);
 
-    evento_t *novo_ev = cria_evento(b, NULL);
-    lef_insere(w->lef, novo_ev, AVISA, w->relogio);
+    agenda_evento(w, b, NULL, AVISA, AGORA);
+
+    printf("%6d: ESPERA HEROI %2d BASE %d (%2d)", w->relogio, h->id, b->id, fila_tamanho(b->espera));
 
     destroi_evento(ev);
 }
@@ -63,10 +68,12 @@ void espera (mundo_t *w, evento_t *ev)
 void desiste (mundo_t *w, evento_t *ev)
 {
     heroi_t *h = ev->campo1;
-    base_t *d = base_aleat();
+    base_t *b = ev->campo2;
+    base_t *d = base_aleat(w);
 
-    evento_t *novo_ev = cria_evento(h, d);
-    lef_insere(w->lef, novo_ev, VIAJA, w->relogio);
+    agenda_evento(w, h, d, VIAJA, AGORA);
+
+    printf("%6d: DESISTE HEROI %2d BASE %d", w->relogio, h->id, b->id);
 
     destroi_evento(ev);
 }
@@ -75,12 +82,15 @@ void avisa (mundo_t *w, evento_t *ev)
 {
     base_t *b = ev->campo1;
 
+    //TEM Q VER ESSE COMENTARIO AI 
+
     while (cjto_card(b->presentes) < b->lotacao) {
         heroi_t *h = fila_retira(b->espera);
         cjto_insere(b->presentes, h->id);
 
-        evento_t *novo_ev = cria_evento(h, b);
-        lef_insere(w->lef, novo_ev, ENTRA, w->relogio);
+        agenda_evento(w, h, b, ENTRA, AGORA);
+
+        printf("%6d: AVISA PORTEIRO BASE %d ADMITE %2d", w->relogio, b->id, h->id);
     }
 
     destroi_evento(ev);
@@ -94,8 +104,9 @@ void entra (mundo_t *w, evento_t *ev)
     // Calculo do tempo de permanência na base
     int tpb = 15 + h->paciencia * aleat(0, 20);
 
-    evento_t *novo_ev = cria_evento(h, b);
-    lef_insere(w->lef, novo_ev, SAI, w->relogio + tpb);
+    agenda_evento(w, h, b, SAI, tpb);
+
+    printf("%6d: ENTRA HEROI %2d BASE %d (%2d/%2d) SAI %d", w->relogio, h->id, b->id, cjto_card(b->presentes), b->presentes);
 
     destroi_evento(ev);
 }
@@ -107,13 +118,12 @@ void sai (mundo_t *w, evento_t *ev)
 
     cjto_retira(b->presentes, h->id);
 
-    base_t *d = base_aleat();
-    
-    evento_t *novo_ev = cria_evento(h, d);
-    lef_insere(w->lef, novo_ev, VIAJA, w->relogio);
+    base_t *d = base_aleat(w);
 
-    evento_t *novo_ev2 = cria_evento(b, NULL);
-    lef_insere(w->lef, novo_ev2, AVISA, w->relogio);
+    agenda_evento(w, h, d, VIAJA, AGORA);
+    agenda_evento(w, b, NULL, AVISA, AGORA);
+
+    printf("%6d: SAI HEROI %2d BASE %d (%2d/%2d)", w->relogio, h->id, b->id, cjto_card(b->presentes), b->presentes);
 
     destroi_evento(ev);
 }
@@ -123,11 +133,12 @@ void viaja (mundo_t *w, evento_t *ev)
     heroi_t *h = ev->campo1;
     base_t *d = ev->campo2;
 
-    int dist = dist_cartesiana(w->bases[h->base].loc, d->loc);
+    int dist = dist_cartesiana(w->bases[h->base]->loc, d->loc);
     int duracao = dist / h->velocidade;
 
-    evento_t *novo_ev = cria_evento(h, d);
-    lef_insere(w->lef, novo_ev, CHEGA, w->relogio + duracao);
+    agenda_evento(w, h, d, CHEGA, duracao);
+
+    printf("%6d: VIAJA HEROI %2d BASE %d BASE %d DIST %d VEL %d CHEGA %d", w->relogio, h->id, h->base, d, dist, h->velocidade, w->relogio + duracao);
 
     destroi_evento(ev);
 }
@@ -135,6 +146,7 @@ void viaja (mundo_t *w, evento_t *ev)
 void morre (mundo_t *w, evento_t *ev)
 {
     heroi_t *h = ev->campo1;
+    missao_t *m = ev->campo2;
     base_t *b = &w->bases[h->base];
 
     cjto_retira(b->presentes, h->id);
@@ -142,8 +154,9 @@ void morre (mundo_t *w, evento_t *ev)
 
     h->vivo = false;
 
-    evento_t *novo_ev = cria_evento(b, NULL);
-    lef_insere(w->lef, novo_ev, AVISA, w->relogio);
+    agenda_evento(w, b, NULL, AVISA, AGORA);
+
+    printf("%6d: MORRE HEROI %2d MISSAO %d", w->relogio, h->id, m->id);
 
     destroi_evento(ev);
 }
@@ -151,32 +164,26 @@ void morre (mundo_t *w, evento_t *ev)
 void missao (mundo_t *w, evento_t *ev)
 {
     missao_t *m = ev->campo1;
-    base_t *bmp = encontra_BMP (m, w);
+    base_t *bmp = encontra_BMP (w, m);
+    heroi_t *h;
 
     m->tentativas++;
 
     if (!bmp) {
-        evento_t *novo_ev = cria_evento(m, NULL);
-        lef_insere(w->lef, novo_ev, MISSAO, w->relogio + 24*60);
+        agenda_evento(w, m, NULL, MISSAO, 24*60);
         destroi_evento(ev);
         return;
     }
 
     int risco;
 
-    for (int i; i < w->nHerois; i++) {
-        heroi_t *h = &w->herois[i];
+    for (int i = 0; i < w->nHerois; i++) {
+        h = w->herois[i];
         
         if (cjto_pertence(bmp->presentes, h->id) > 0 && h->estado) {
             risco = m->perigo / (h->paciencia + h->xp + 1);
 
-            if (risco > aleat(0, 30)) {
-                evento_t *novo_ev2 = cria_evento(h, NULL);
-                lef_insere(w->lef, novo_ev2, MORRE, w->relogio);
-            }
-
-            else 
-                h->xp++;
+            (risco > aleat(0, 30)) ? agenda_evento(w, h, m, MORRE, AGORA) : h->xp++;
         }   
     }
 
@@ -186,12 +193,49 @@ void missao (mundo_t *w, evento_t *ev)
 void invade (mundo_t *w, evento_t *ev)
 {
     invasao_t *inv = ev->campo1;
-    base_t *b = &w->bases[inv->local];  // Perguntar se passa como campo 2 ou faz assim
+    base_t *b = w->bases[inv->local];
+    heroi_t *h;
 
     if (!b->estado) {
         destroi_evento(ev);
         return;
     }
 
+    for (int i = 0; i < w->nHerois; i++) {
+        h = w->herois[i];
+        if (cjto_pertence(b->presentes, h->id) > 0 && h->estado) {
+            h->estado = false;
+            agenda_evento(w, h, NULL, RECUPERA_HEROI, inv->penalidadeHeroi);
+
+            //lef_retira_sai(w->lef, h->id);
+            
+            agenda_evento(w, h, b, SAI, AGORA);
+        }
+    }
+
+    b->estado = false;
+    agenda_evento(w, b, NULL, reconstroi_base, inv->penalidadeBase);
+
+    destroi_evento(ev);
+}
+
+void recupera_heroi (evento_t *ev)
+{
+    heroi_t *h = ev->campo1;
+    h->estado = true;
+
+    destroi_evento(ev);
+}
+
+void reconstroi_base (evento_t *ev)
+{
+    base_t *b = ev->campo1;
+    b->estado = true;
+
+    destroi_evento(ev);
+}
+
+void fim (mundo_t *w)
+{
 
 }

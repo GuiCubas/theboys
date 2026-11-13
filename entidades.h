@@ -52,6 +52,8 @@ typedef struct
     int penalidadeHeroi;        // Tempo de penalidade que os heróis da base vão sofrer
 } invasao_t;
 
-base_t *base_aleat();
+base_t *base_aleat(mundo_t *w);
+
+base_t *encontra_BMP(mundo_t *w, missao_t *m);
 
 #endif
