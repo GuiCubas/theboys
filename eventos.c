@@ -34,11 +34,11 @@ void chega (mundo_t *w, evento_t *ev)
 {
     heroi_t *h = ev->campo1;
     base_t *b = ev->campo2;
-    bool espera;
+    int espera;
 
     h->base = b->id;
 
-    espera = (!lef_tamanho(b->espera)) ? true : h->paciencia > (10 * lef_tamanho(b->espera));
+    espera = (!lef_tamanho(b->espera)) ? 1 : h->paciencia > (10 * lef_tamanho(b->espera));
 
     int tipo = (espera && b->estado) ? ESPERA : DESISTE;
     agenda_evento (w, h, b, tipo, AGORA);
@@ -152,7 +152,7 @@ void morre (mundo_t *w, evento_t *ev)
     cjto_retira(b->presentes, h->id);
     lef_retira_heroi(w->lef, h->id);
 
-    h->vivo = false;
+    h->vivo = 0;
 
     agenda_evento(w, b, NULL, AVISA, AGORA);
 
@@ -204,16 +204,28 @@ void invade (mundo_t *w, evento_t *ev)
     for (int i = 0; i < w->nHerois; i++) {
         h = w->herois[i];
         if (cjto_pertence(b->presentes, h->id) > 0 && h->estado) {
-            h->estado = false;
+            h->estado = 0;
             agenda_evento(w, h, NULL, RECUPERA_HEROI, inv->penalidadeHeroi);
 
-            //lef_retira_sai(w->lef, h->id);
+            struct lefnodo_t *aux = w->lef->prim;
+            struct lefnodo_t *aux2;
+
+            while(aux->prox->prio <= T_FIM_DO_MUNDO) {
+                if ((aux->prox->tipo == SAI) && (aux->prox->item->campo1 == w->herois[i])) {
+                aux2 = aux->prox;
+                aux->prox = aux2->prox;
+
+                destroi_evento(aux2->item);
+                free(aux2);
+                }
+                aux = aux->prox;
+            }
             
             agenda_evento(w, h, b, SAI, AGORA);
         }
     }
 
-    b->estado = false;
+    b->estado = 0;
     agenda_evento(w, b, NULL, reconstroi_base, inv->penalidadeBase);
 
     destroi_evento(ev);
@@ -222,7 +234,7 @@ void invade (mundo_t *w, evento_t *ev)
 void recupera_heroi (evento_t *ev)
 {
     heroi_t *h = ev->campo1;
-    h->estado = true;
+    h->estado = 1;
 
     destroi_evento(ev);
 }
@@ -230,12 +242,12 @@ void recupera_heroi (evento_t *ev)
 void reconstroi_base (evento_t *ev)
 {
     base_t *b = ev->campo1;
-    b->estado = true;
+    b->estado = 1;
 
     destroi_evento(ev);
 }
 
 void fim (mundo_t *w)
 {
-
+    printf("acabou");
 }

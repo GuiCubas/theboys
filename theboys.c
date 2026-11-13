@@ -3,7 +3,6 @@
 
 // seus #includes vão aqui
 #include "mundo.h"
-#include "simulacao.h"
 
 // seus #defines vão aqui
 
@@ -13,12 +12,8 @@
 int main ()
 {
   mundo_t *w = inicializa_mundo();
-
   simulacao(w);
-  // executar o laço de simulação
-
   destroi_mundo(w);
-  // destruir o mundo
 
   return (0) ;
 }

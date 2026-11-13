@@ -1,6 +1,8 @@
 #ifndef EVENTOS
 #define EVENTOS
 
+#include "mundo.h"
+#include "entidades.h"
 #define AGORA 0
 #define CHEGA 1
 #define ESPERA 2

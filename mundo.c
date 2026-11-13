@@ -1,13 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include "mundo.h"
 #include "entidades.h"
 #include "eventos.h"
 #include "utils.h"
-#include "conjunto.h"
 #include "fila.h"
 
+void destroi_mundo (mundo_t *w)
+{
+    free(w->herois);
+    free(w->bases);
+    free(w->missoes);
+    free(w->invasoes);
+    lef_destroi(w->lef);
+    free(w);
+}
 
 mundo_t *inicializa_mundo ()
 {
@@ -59,5 +66,75 @@ void inicializa_eventos_invasoes(mundo_t *w)
     for (int i = 0; i < N_INVASOES; i++) {
         time = aleat ((60*24*3), T_FIM_DO_MUNDO);
         agenda_evento(w, w->invasoes[i], NULL, INVADE, time);
+    }
+}
+
+void simulacao(mundo_t *w)
+{
+    int *tipo;
+    int *time;
+    struct lefnodo_t *ev;
+
+    while (w->relogio <= T_FIM_DO_MUNDO)
+    {
+        ev = lef_retira(w->lef, tipo, time);
+        w->relogio;
+
+        switch (*tipo)
+        {
+            case CHEGA:
+                chega(w, ev);
+                break;
+
+            case ESPERA:
+                espera(w, ev);
+                break;
+
+            case DESISTE:
+                desiste(w, ev);
+                break;
+
+            case AVISA:
+                avisa(w, ev);
+                break;
+
+            case ENTRA:
+                entra(w, ev);
+                break;
+
+            case SAI:
+                sai(w, ev);
+                break;
+
+            case VIAJA:
+                viaja(w, ev);
+                break;
+            
+            case MORRE:
+                morre(w, ev);
+                break;
+
+            case MISSAO:
+                missao(w, ev);
+                break;
+
+            case INVADE:
+                invade(w, ev);
+                break;
+            
+            case RECUPERA_HEROI:
+                recupera_heroi(ev);
+                break;
+
+            case RECONSTROI_BASE:
+                reconstroi_base(ev);
+                break;
+
+            case FIM:
+                fim(w);
+                break;
+        }
+        
+        destroi_evento(ev);
     }
 }

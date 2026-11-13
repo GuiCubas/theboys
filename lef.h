@@ -10,7 +10,7 @@
 // descreve um nodo da fila de prioridades
 struct lefnodo_t
 {
-	void *item ;			// item associado ao nodo
+	evento_t *item ;			// item associado ao nodo
 	int   tipo ;			// tipo do item
 	int   prio ;			// prioridade do item
 	struct lefnodo_t *prox;	// próximo nodo
@@ -54,6 +54,6 @@ int lef_tamanho (struct lef_t *f);
 void lef_imprime (struct lef_t *f);
 
 // Percorre toda a lef e retira todos os eventos relacionados ao heroi H
-void lef_retira_heroi(struct lef_t *f, int h);
+void lef_retira_heroi(struct lef_t *f, heroi_t *h);
 
 #endif

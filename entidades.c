@@ -1,5 +1,9 @@
 // TADs das entidades herói, base, missão e invasão
+#include <stdlib.h>
+#include "entidades.h"
+#include "utils.h"
 #include "mundo.h"
+
 
 void inicializa_herois(mundo_t *w)
 {
@@ -11,7 +15,9 @@ void inicializa_herois(mundo_t *w)
         h->xp = 0;
         h->paciencia = aleat(0, 100);
         h->velocidade = aleat(50, 5000);
-        // h->habilidades ver como faz a parte de conjunto do heroi
+        h->habilidades = cjto_aleat(aleat(0,3), w->nHabilidades);
+        h->estado = 1;
+        h->vivo = 1;
     }
 }
 
@@ -37,7 +43,7 @@ void inicializa_missoes(mundo_t *w)
         m = w->missoes[i];
         m->id = i;
         m->loc = coordenada_aleat(0, N_TAMANHO_MUNDO - 1);
-        // m->habilidades tem q ver essa porra de conjunto
+        m->habilidades = cjto_aleat(aleat(6, 10), w->nHabilidades);
         m->perigo = aleat(0, 100);
     }
 }
@@ -83,4 +89,11 @@ base_t *encontra_BMP (mundo_t *w, missao_t *m)
     }
 
     return NULL;
+}
+
+base_t *base_aleat(mundo_t *w)
+{
+    int i = aleat(0, w->nBases);
+    
+    return w->bases[i];
 }

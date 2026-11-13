@@ -1,10 +1,12 @@
 #ifndef FILA
 #define FILA
 
+#include "eventos.h"
+
 // descreve um nodo da fila 
 struct fila_nodo_t
 {
-	void *item ;			// item associado ao nodo
+	evento_t *item ;			// item associado ao nodo
 	struct fila_nodo_t *prox;	// próximo nodo
 };
 

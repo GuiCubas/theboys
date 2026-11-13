@@ -3,8 +3,6 @@
 #ifndef MUNDO  
 #define MUNDO
 
-#include <stdio.h>
-#include <stdbool.h>
 #include "entidades.h"
 #include "lef.h"
 
@@ -44,5 +42,7 @@ typedef struct
 mundo_t *inicializa_mundo ();
 
 void destroi_mundo (mundo_t *w);
+
+void simulacao(mundo_t *w);
 
 #endif

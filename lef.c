@@ -10,10 +10,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "lef.h"
+#include "entidades.h"
+#include "mundo.h"
+#include "eventos.h"
 
 struct lefnodo_t
 {
-  void *item ;          // item associado ao nodo
+  evento_t *item ;          // item associado ao nodo
   int   tipo ;          // tipo do item
   int   prio ;          // prioridade do item
   struct lefnodo_t *prox;    // próximo nodo
@@ -172,7 +175,19 @@ void lef_imprime (struct lef_t *f)
   }
 }
 
-void lef_retira_heroi(struct lef_t *f, int h)
+void lef_retira_heroi(struct lef_t *f, heroi_t *h)
 {
-    
+  struct lefnodo_t *aux = f->prim;
+  struct lefnodo_t *aux2;
+
+  while(aux->prox->prio <= T_FIM_DO_MUNDO) {
+    if (h == aux->prox->item->campo1) {
+      aux2 = aux->prox;
+      aux->prox = aux2->prox;
+
+      destroi_evento(aux2->item);
+      free(aux2);
+    }
+    aux = aux->prox;
+  }
 }

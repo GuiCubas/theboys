@@ -1,24 +1,22 @@
 ARQUIVOS:
 - Entidades.c
+- Entidades.h
 - Fila.c
 - Lef.c
 - Mundo.c
 - Utils.c
 
 FUNÇÕES:
-- lef_retira_heroi(w->lef, h->id);
-- lef_retira_sai(w->lef, h->id);
-- void invade (mundo_t *w, evento_t *ev)
 - void fim (mundo_t *w)
-- void destroe_mundo (mundo_t *w);
-- int aleat (min, max);
-- int dist_cartesiana (coordenada_t loc1, coordenada_t loc2);
 
 STRUCTS:
 - typedef struct
     {
 
-    } estats_t; 
+    } xaxixica_t; 
 
 COISAS DO ENUNCIADO:
 - MENSAGENS DE SAÍDA (7)
+
+MISCELANIA
+- Dar free nos ponteiro tudo

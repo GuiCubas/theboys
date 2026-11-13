@@ -7,22 +7,26 @@ LDLIBS  = -lm
 MAIN    = theboys
 ENTREGA = $(MAIN)
 
-# lista de arquivos de cabeçalho (a completar)
-HDR = fila.h fprio.h conjunto.h
+# lista de arquivos de cabeçalho
+HDR = fila.h lef.h conjunto.h entidades.h eventos.h mundo.h utils.h
 
-# lista de arquivos-objeto (a completar)
+# lista de arquivos-objeto (não inclua theboys.o aqui, pois ele é tratado como $(MAIN).o)
 # não inclua conjunto.o, senão ele será removido com "make clean"
-OBJ = fila.o fprio.o theboys.o
+OBJ = fila.o lef.o entidades.o eventos.o mundo.o utils.o
 
 # construir o executável
 $(MAIN): $(MAIN).o $(OBJ) conjunto.o
 
-# construir os arquivos-objeto (a completar)
+# construir os arquivos-objeto
 $(MAIN).o: $(MAIN).c $(HDR)
 
 # construir os TADs
 fila.o: fila.c fila.h
-fprio.o: fprio.c fprio.h
+lef.o: lef.c lef.h
+entidades.o: entidades.c entidades.h
+eventos.o: eventos.c eventos.h
+mundo.o: mundo.c mundo.h
+utils.o: utils.c utils.h
 
 # executar
 run: $(MAIN)
@@ -43,5 +47,4 @@ tgz: clean
 
 # limpar arquivos temporários
 clean:
-	rm -f *~ $(OBJ) $(MAIN) /tmp/$(USER)/$(ENTREGA) $(ENTREGA).tgz
-
+	rm -f *~ $(OBJ) $(MAIN) $(MAIN).o /tmp/$(USER)/$(ENTREGA) $(ENTREGA).tgz
