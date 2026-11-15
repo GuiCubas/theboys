@@ -1,28 +1,6 @@
 #include <math.h>
 #include <stdlib.h>
-#include <utils.h>
-#include "entidades.h"
-
-// TROCAR PARA INSERTION
-void selectionSortDuplo(base_t *v[], int u[], int tam)
-{
-    int i, j, auxU, auxV;
-    
-    for (j = 1; j < tam; j++) {
-        auxU = u[j];
-        auxV = v[j];
-        i = j - 1;
-
-        while ((i >= 0) && (u[i] > auxU)) {
-            u[i + 1] = u[i];
-            v[i + 1] = v[i];
-            i = i - 1;
-        }
-        
-        u[i + 1] = auxU;
-        v[i + 1] = auxV;
-    }
-}
+#include "utils.h"
 
 int aleat (int min, int max)
 {

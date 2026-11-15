@@ -1,12 +1,11 @@
 #ifndef FILA
 #define FILA
 
-#include "eventos.h"
-
+#include "entidades.h"
 // descreve um nodo da fila 
 struct fila_nodo_t
 {
-	evento_t *item ;			// item associado ao nodo
+	int item;			// item associado ao nodo
 	struct fila_nodo_t *prox;	// próximo nodo
 };
 
@@ -29,11 +28,11 @@ struct fila_t *fila_destroi (struct fila_t *f);
 // Insere o item na fila
 // Inserir duas vezes o mesmo item (o mesmo ponteiro) é um erro.
 // Retorno: número de itens na fila após a operação ou -1 se erro.
-int fila_insere (struct fila_t *f, void *item);
+int fila_insere (struct fila_t *f, int item);
 
 // Retira o primeiro item da fila e o devolve
 // Retorno: ponteiro para o item retirado ou NULL se fila vazia ou erro.
-void *fila_retira (struct fila_t *f);
+int fila_retira (struct fila_t *f);
 
 // Informa o número de itens na fila.
 // Retorno: N >= 0 ou -1 se erro.

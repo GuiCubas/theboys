@@ -7,6 +7,9 @@
 #ifndef LEF
 #define LEF
 
+#include "entidades.h"
+#include "eventos.h"
+
 // descreve um nodo da fila de prioridades
 struct lefnodo_t
 {

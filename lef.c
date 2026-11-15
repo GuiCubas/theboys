@@ -14,21 +14,6 @@
 #include "mundo.h"
 #include "eventos.h"
 
-struct lefnodo_t
-{
-  evento_t *item ;          // item associado ao nodo
-  int   tipo ;          // tipo do item
-  int   prio ;          // prioridade do item
-  struct lefnodo_t *prox;    // próximo nodo
-};
-
-// descreve uma fila de prioridades
-struct lef_t
-{
-  struct lefnodo_t *prim ;   // primeiro nodo da fila
-  int num ;         // número de itens na fila
-} ;
-
 // Cria uma fila vazia.
 // Retorno: ponteiro para a fila criada ou NULL se erro.
 struct lef_t *lef_cria ()
@@ -175,19 +160,32 @@ void lef_imprime (struct lef_t *f)
   }
 }
 
-void lef_retira_heroi(struct lef_t *f, heroi_t *h)
+void lef_retira_heroi (struct lef_t *f, heroi_t *h)
 {
+  if (!f || !h)
+    return;
+
+  struct lefnodo_t *ant = NULL;
   struct lefnodo_t *aux = f->prim;
-  struct lefnodo_t *aux2;
 
-  while(aux->prox->prio <= T_FIM_DO_MUNDO) {
-    if (h == aux->prox->item->campo1) {
-      aux2 = aux->prox;
-      aux->prox = aux2->prox;
+  while (aux) {
+    struct lefnodo_t *prox = aux->prox;
+    evento_t *ev = aux->item;
 
-      destroi_evento(aux2->item);
-      free(aux2);
-    }
-    aux = aux->prox;
+    if (ev->campo1 == h) {
+      // desliga o nodo da lista
+      if (ant)
+        ant->prox = prox;
+      else
+        f->prim = prox;
+
+      f->num--;
+      destroi_evento(ev);
+      free(aux);
+      // ant continua o mesmo
+    } else
+      ant = aux;
+
+    aux = prox;
   }
 }

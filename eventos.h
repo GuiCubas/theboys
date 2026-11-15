@@ -2,7 +2,7 @@
 #define EVENTOS
 
 #include "mundo.h"
-#include "entidades.h"
+
 #define AGORA 0
 #define CHEGA 1
 #define ESPERA 2
@@ -17,6 +17,8 @@
 #define RECUPERA_HEROI 11
 #define RECONSTROI_BASE 12
 #define FIM 13
+
+typedef struct mundo mundo_t;
 
 typedef struct
 {
@@ -38,6 +40,6 @@ void missao (mundo_t *w, evento_t *ev);
 void invade (mundo_t *w, evento_t *ev);
 void recupera_heroi (evento_t *ev);
 void reconstroi_base (evento_t *ev);
-void fim (mundo_t *w);
+void fim (mundo_t *w, evento_t *ev);
 
 #endif

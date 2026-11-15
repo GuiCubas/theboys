@@ -1,22 +1,3 @@
-ARQUIVOS:
-- Entidades.c
-- Entidades.h
-- Fila.c
-- Lef.c
-- Mundo.c
-- Utils.c
+COLOCAR SAIDA DAS MISSOES E INVASOES
 
-FUNÇÕES:
-- void fim (mundo_t *w)
-
-STRUCTS:
-- typedef struct
-    {
-
-    } xaxixica_t; 
-
-COISAS DO ENUNCIADO:
-- MENSAGENS DE SAÍDA (7)
-
-MISCELANIA
-- Dar free nos ponteiro tudo
+ARRUMAR OS ARQUIVOS PRA FICAREM BONITOS

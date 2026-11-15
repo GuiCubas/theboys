@@ -17,6 +17,22 @@
 
 typedef struct
 {
+    int fila_max;
+    int m_cumpridas;
+} estatsBase_t;
+
+typedef struct
+{
+    int ev_totais;
+    int m_cumpridas;
+    int *m_tentativas;
+    int inv_realizadas;
+    int mortes;
+    estatsBase_t **bases;
+} estats_t;
+
+typedef struct mundo
+{
     int nHerois;            // Número total de heróis no mundo
     heroi_t **herois;          // Vetor dos heróis no mundo
 
@@ -36,12 +52,16 @@ typedef struct
 
     int relogio;            // Relógio que indica o tempo atual
     
-    struct lef_t *lef;
+    struct lef_t *lef;      //
+
+    estats_t *estats;
 } mundo_t;
+
+void estats_destroi(mundo_t *w);
 
 mundo_t *inicializa_mundo ();
 
-void destroi_mundo (mundo_t *w);
+mundo_t *destroi_mundo (mundo_t *w);
 
 void simulacao(mundo_t *w);
 

@@ -4,12 +4,8 @@
 #define ENTIDADES
 
 #include "conjunto.h"
-#include "mundo.h"
-#include "utils.h"
-#include "eventos.h"
 #include "fila.h"
 #include "utils.h"
-
 
 // HERÓI
 typedef struct
@@ -25,7 +21,7 @@ typedef struct
 } heroi_t;
 
 // BASE
-typedef struct
+typedef struct base
 {
     int id;                     // Identificar único da base
     int lotacao;                // Max de heróis na base
@@ -41,7 +37,6 @@ typedef struct
     int id;                     // Identificador único da missão
     struct cjto_t *habilidades; // Conjunto de habilidades necessários para concluir a missão
     int perigo;                 // Nível de perigo da missão
-    int tentativas;             // Tentativas até a missão ser cumprida
     coordenada_t loc;      // Par de coordenadas X e Y da missão
 } missao_t;
 
@@ -53,9 +48,5 @@ typedef struct
     int penalidadeBase;         // Tempo de penalidade que a base vai sofrer
     int penalidadeHeroi;        // Tempo de penalidade que os heróis da base vão sofrer
 } invasao_t;
-
-base_t *base_aleat(mundo_t *w);
-
-base_t *encontra_BMP(mundo_t *w, missao_t *m);
 
 #endif
