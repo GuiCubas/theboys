@@ -13,7 +13,7 @@
 // descreve um nodo da fila de prioridades
 struct lefnodo_t
 {
-	evento_t *item ;			// item associado ao nodo
+	evento_t *item ;		// evento associado ao nodo
 	int   tipo ;			// tipo do item
 	int   prio ;			// prioridade do item
 	struct lefnodo_t *prox;	// próximo nodo
@@ -24,7 +24,7 @@ struct lef_t
 {
 	struct lefnodo_t *prim ;	// primeiro nodo da fila
 	struct lefnodo_t *fim;		// último nodo da fila
-	int num ;			// número de itens na fila
+	int num ;					// número de itens na fila
 };
 
 // Cria uma fila vazia.
@@ -51,12 +51,13 @@ void *lef_retira (struct lef_t *f, int *tipo, int *prio);
 // Retorno: N >= 0 ou -1 se erro.
 int lef_tamanho (struct lef_t *f);
 
-// Imprime o conteúdo da fila no formato "(tipo prio) (tipo prio) ..."
+// Imprime o conteúdo da fila no formato "tipo prio tipo prio ..."
 // Para cada item deve ser impresso seu tipo e sua prioridade, com um
 // espaço entre valores, sem espaços antes ou depois e sem nova linha.
 void lef_imprime (struct lef_t *f);
 
-// Percorre toda a lef e retira todos os eventos relacionados ao heroi H
-void lef_retira_heroi(struct lef_t *f, heroi_t *h);
+// Recebe um herói H, um tipo de evento
+// Se o evento for falso (0), retira todos os eventos relacionados a esse H
+void lef_limpeza_heroi(struct lef_t *f, heroi_t *h, int tipo);
 
 #endif

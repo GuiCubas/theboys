@@ -7,21 +7,41 @@
 #include "lef.h"
 #include "fila.h"
 
-#define TRES_DIAS (60 * 24 * 3)   // 4320 minutos
-
-
 /* ------------------------------------------------------------------ */
-/* Destruicao                                                         */
+/* MUNDO                                                              */
 /* ------------------------------------------------------------------ */
 
-// Libera o mundo e tudo que ele contem. Funciona tambem com um mundo
-// parcialmente inicializado (campos nao alocados devem ser NULL).
-mundo_t *destroi_mundo (mundo_t *w)
+mundo_t *mundo_ini ()
+{
+    mundo_t *w = calloc(1, sizeof(mundo_t));
+
+    w->nHerois = N_HEROIS;
+    w->nBases = N_BASES;
+    w->nMissoes = N_MISSOES;
+    w->nInvasoes = N_INVASOES;
+    w->nHabilidades = N_HABILIDADES;
+    w->tamX = N_TAMANHO_MUNDO;
+    w->tamY = N_TAMANHO_MUNDO;
+    w->relogio = T_INICIO;
+    w->lef = lef_cria();
+    w->estats = estats_cria();
+
+    herois_ini(w);
+    bases_ini(w);
+    missoes_ini(w);
+    invasoes_ini(w);
+    ini_ev(w);
+    
+
+    return w;
+}
+
+mundo_t *mundo_destroi (mundo_t *w)
 {
     if (!w)
         return NULL;
 
-    /* herois */
+    // HEROIS
     for (int i = 0; i < w->nHerois; i++) {
         if (w->herois[i]) {
             cjto_destroi(w->herois[i]->habilidades);
@@ -30,7 +50,7 @@ mundo_t *destroi_mundo (mundo_t *w)
     }
     free(w->herois);
 
-    /* bases */
+    // BASES
     for (int i = 0; i < w->nBases; i++) {
         if (w->bases[i]) {
             cjto_destroi(w->bases[i]->presentes);
@@ -40,7 +60,7 @@ mundo_t *destroi_mundo (mundo_t *w)
     }
     free(w->bases);
 
-    /* missoes */
+    // MISSOES
     for (int i = 0; i < w->nMissoes; i++) {
         if (w->missoes[i]) {
             cjto_destroi(w->missoes[i]->habilidades);
@@ -49,11 +69,12 @@ mundo_t *destroi_mundo (mundo_t *w)
     }
     free(w->missoes);
 
-    /* invasoes */
+    // INVASOES
     for (int i = 0; i < w->nInvasoes; i++)
         free(w->invasoes[i]);
     free(w->invasoes);
 
+    // TADs
     estats_destroi(w);
     lef_destroi(w->lef);
     free(w);
@@ -62,11 +83,10 @@ mundo_t *destroi_mundo (mundo_t *w)
 }
 
 /* ------------------------------------------------------------------ */
-/* Inicializacao das entidades                                        */
-/* Retorno: 0 se ok, -1 se erro de alocacao.                          */
+/* ENTIDADES                                                          */
 /* ------------------------------------------------------------------ */
 
-void inicializa_herois (mundo_t *w)
+void herois_ini (mundo_t *w)
 {
     w->herois = calloc(w->nHerois, sizeof(heroi_t *));
 
@@ -84,7 +104,7 @@ void inicializa_herois (mundo_t *w)
     }
 }
 
-void inicializa_bases (mundo_t *w)
+void bases_ini (mundo_t *w)
 {
     w->bases = calloc(w->nBases, sizeof(base_t *));
 
@@ -101,7 +121,7 @@ void inicializa_bases (mundo_t *w)
     }
 }
 
-void inicializa_missoes (mundo_t *w)
+void missoes_ini (mundo_t *w)
 {
     w->missoes = calloc(w->nMissoes, sizeof(missao_t *));
 
@@ -115,7 +135,7 @@ void inicializa_missoes (mundo_t *w)
     }
 }
 
-void inicializa_invasoes (mundo_t *w)
+void invasoes_ini (mundo_t *w)
 {
     w->invasoes = calloc(w->nInvasoes, sizeof(invasao_t *));
 
@@ -130,19 +150,19 @@ void inicializa_invasoes (mundo_t *w)
 }
 
 /* ------------------------------------------------------------------ */
-/* Eventos iniciais                                                   */
+/* EVENTOS INICIAIS                                                   */
 /* ------------------------------------------------------------------ */
 
-void inicializa_eventos_herois (mundo_t *w)
+void herois_ini_ev (mundo_t *w)
 {
     for (int i = 0; i < w->nHerois; i++) {
         base_t *b = w->bases[aleat(0, w->nBases - 1)];
-        int tempo = aleat(0, TRES_DIAS);
+        int tempo = aleat(0, 4320);
         agenda_evento(w, w->herois[i], b, CHEGA, tempo);
     }
 }
 
-void inicializa_eventos_missoes (mundo_t *w)
+void missoes_ini_ev (mundo_t *w)
 {
     for (int i = 0; i < w->nMissoes; i++) {
         int tempo = aleat(0, T_FIM_DO_MUNDO);
@@ -150,33 +170,39 @@ void inicializa_eventos_missoes (mundo_t *w)
     }
 }
 
-void inicializa_eventos_invasoes (mundo_t *w)
+void invasoes_ini_ev (mundo_t *w)
 {
     for (int i = 0; i < w->nInvasoes; i++) {
-        int tempo = aleat(TRES_DIAS, T_FIM_DO_MUNDO);
+        int tempo = aleat(4321, T_FIM_DO_MUNDO);
         agenda_evento(w, w->invasoes[i], NULL, INVADE, tempo);
     }
 }
 
-void inicializa_eventos (mundo_t *w)
+void ini_ev (mundo_t *w)
 {
-    inicializa_eventos_herois(w);
-    inicializa_eventos_missoes(w);
-    inicializa_eventos_invasoes(w);
+    herois_ini_ev(w);
+    missoes_ini_ev(w);
+    invasoes_ini_ev(w);
     agenda_evento(w, NULL, NULL, FIM, T_FIM_DO_MUNDO);
 }
 
-void inicializa_estatisticas (mundo_t *w)
-{
-    w->estats = calloc(1, sizeof(estats_t));
-    w->estats->m_tentativas = calloc(w->nMissoes, sizeof(int));
-    w->estats->bases = calloc(w->nBases, sizeof(estatsBase_t *));
+/* ------------------------------------------------------------------ */
+/* ESTATÍSTICAS                                                       */
+/* ------------------------------------------------------------------ */
 
-    for (int i = 0; i < w->nBases; i++)
-        w->estats->bases[i] = calloc(1, sizeof(estatsBase_t));
+estats_t *estats_cria ()
+{
+    estats_t *estats = calloc(1, sizeof(estats_t));
+    estats->m_tentativas = calloc(N_MISSOES, sizeof(int));
+    estats->bases = calloc(N_BASES, sizeof(estatsBase_t *));
+
+    for (int i = 0; i < N_BASES; i++)
+        estats->bases[i] = calloc(1, sizeof(estatsBase_t));
+
+    return estats;
 }
 
-void estats_destroi(mundo_t *w)
+estats_t *estats_destroi (mundo_t *w)
 {
     for (int i = 0; i < w->nBases; i++)
         free(w->estats->bases[i]);
@@ -184,41 +210,12 @@ void estats_destroi(mundo_t *w)
     free(w->estats->bases);
     free(w->estats->m_tentativas);
     free(w->estats);
-}
-/* ------------------------------------------------------------------ */
-/* Mundo                                                              */
-/* ------------------------------------------------------------------ */
 
-// Cria e inicializa o mundo.
-// Retorno: ponteiro para o mundo ou NULL se erro.
-mundo_t *inicializa_mundo ()
-{
-    // calloc zera tudo: ponteiros nao alocados ficam NULL
-    // (necessario para destroi_mundo funcionar em caso de erro)
-    mundo_t *w = calloc(1, sizeof(mundo_t));
-
-    w->nHerois = N_HEROIS;
-    w->nBases = N_BASES;
-    w->nMissoes = N_MISSOES;
-    w->nInvasoes = N_INVASOES;
-    w->nHabilidades = N_HABILIDADES;
-    w->tamX = N_TAMANHO_MUNDO;
-    w->tamY = N_TAMANHO_MUNDO;
-    w->relogio = 0;
-
-    w->lef = lef_cria();
-
-    inicializa_herois(w);
-    inicializa_bases(w);
-    inicializa_missoes(w);
-    inicializa_invasoes(w);
-    inicializa_eventos(w);
-    inicializa_estatisticas(w);
-    return w;
+    return NULL;
 }
 
 /* ------------------------------------------------------------------ */
-/* Simulacao                                                          */
+/* SIMULAÇÃO                                                          */
 /* ------------------------------------------------------------------ */
 
 void simulacao (mundo_t *w)
@@ -229,7 +226,7 @@ void simulacao (mundo_t *w)
     while (w->relogio <= T_FIM_DO_MUNDO) {
         ev = lef_retira(w->lef, &tipo, &tempo);
         if (!ev)
-            break;   // LEF vazia: nada mais a simular
+            break;
 
         w->relogio = tempo;
 
@@ -292,8 +289,7 @@ void simulacao (mundo_t *w)
         }
         w->estats->ev_totais++;
 
-        if (tipo == FIM) {
+        if (tipo == FIM)        // Garantia q vai parar no FIM
             break;
-        }
     }
 }

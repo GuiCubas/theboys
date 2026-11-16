@@ -1,16 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "eventos.h"
 #include "entidades.h"
 #include "lef.h"
 #include "mundo.h"
-#include "eventos.h"
 #include "utils.h"
 
-base_t *encontra_BMP (mundo_t *w, missao_t *m);
-base_t *base_aleat(mundo_t *w);
-void insertionSortDuplo(base_t *v[], int u[], int tam);
-
 // Retorna ponteiro para evento criado com 2 campos
+evento_t *cria_evento (void *campo1, void *campo2);
+
+// Encontra base mais próxima apta para realizar uma missão M
+base_t *encontra_BMP (mundo_t *w, missao_t *m, struct cjto_t **hab);
+
+// Sorteia uma base aleatória no vetor de bases do mundo
+base_t *base_aleat (mundo_t *w);
+
+// Insertion Sort de dois vetores ao mesmo tempo, usando como base o U para ordenar
+void insertionSortDuplo (base_t *v[], int u[], int tam);
+
+/* ------------------------------------------------------------------ */
+/* AGENDAMENTO E DESTRUIÇÃO DE EVENTOS                                */
+/* ------------------------------------------------------------------ */
+
 evento_t *cria_evento (void *campo1, void *campo2)
 {
     evento_t *evento = malloc(sizeof(evento_t));
@@ -21,15 +32,12 @@ evento_t *cria_evento (void *campo1, void *campo2)
     return(evento);
 }
 
-// Libera a memória alocada para esse evento
-void destroi_evento (evento_t *ev)
+evento_t *destroi_evento (evento_t *ev)
 {
     free(ev);
+    return NULL;
 }
 
-// ATENCAO: confira em lef.h a ordem dos parametros de lef_insere.
-// Aqui assumo (lef, item, tipo, prioridade/tempo). Se for (lef, item, tempo, tipo),
-// troque a ordem na chamada abaixo.
 void agenda_evento (mundo_t *w, void *campo1, void *campo2, int tipo, int time)
 {
     evento_t *ev = cria_evento(campo1, campo2);
@@ -37,22 +45,31 @@ void agenda_evento (mundo_t *w, void *campo1, void *campo2, int tipo, int time)
     lef_insere(w->lef, ev, tipo, w->relogio + time);
 }
 
+/* ------------------------------------------------------------------ */
+/* OS EVENTOS EM SI                                                   */
+/* ------------------------------------------------------------------ */
+
 void chega (mundo_t *w, evento_t *ev)
 {
     heroi_t *h = ev->campo1;
     base_t *b = ev->campo2;
     int vai_esperar;
 
+    // Troca a base de H
     h->base = b->id;
 
+    // Se tiver vaga e fila vazia ele espera direto
     if (cjto_card(b->presentes) < b->lotacao && !fila_tamanho(b->espera))
         vai_esperar = 1;
+    
+    // Se não faz essa equação para decidir
     else
         vai_esperar = h->paciencia > (10 * fila_tamanho(b->espera));
 
     int tipo = (vai_esperar && b->estado) ? ESPERA : DESISTE;
     agenda_evento (w, h, b, tipo, AGORA);
 
+    // Uso uma string pro tipo do evento, q é decidida pelo ternário
     printf("%6d: CHEGA HEROI %2d BASE %d (%2d/%2d) %s\n", w->relogio, h->id, b->id,
     cjto_card(b->presentes), b->lotacao, (tipo == ESPERA) ? "ESPERA" : "DESISTE");
 
@@ -64,13 +81,14 @@ void espera (mundo_t *w, evento_t *ev)
     heroi_t *h = ev->campo1;
     base_t *b = ev->campo2;
 
-    // Imprime antes de inserir: o tamanho nao conta o heroi que esta entrando
+    // Imprimo no começo pq o tamanho não conta o H atual
     printf("%6d: ESPERA HEROI %2d BASE %d (%2d)\n", w->relogio, h->id, b->id, fila_tamanho(b->espera));
 
     fila_insere(b->espera, h->id);
 
     agenda_evento(w, b, NULL, AVISA, AGORA);
 
+    // Condicional pra ver o tamanho máximo da fila
     if (w->estats->bases[b->id]->fila_max < fila_tamanho(b->espera))
         w->estats->bases[b->id]->fila_max = fila_tamanho(b->espera);
 
@@ -98,8 +116,8 @@ void avisa (mundo_t *w, evento_t *ev)
     fila_imprime(b->espera);
     printf(" ]\n");
 
-    // So admite se a base esta de pe, ha vaga E ha alguem na fila
-    while (b->estado && cjto_card(b->presentes) < b->lotacao && fila_tamanho(b->espera) > 0) {
+
+    while (cjto_card(b->presentes) < b->lotacao && fila_tamanho(b->espera) > 0) {
         heroi_t *h = w->herois[fila_retira(b->espera)];
         cjto_insere(b->presentes, h->id);
 
@@ -116,13 +134,13 @@ void entra (mundo_t *w, evento_t *ev)
     heroi_t *h = ev->campo1;
     base_t *b = ev->campo2;
 
-    // Tempo de permanência na base (aleat(1,20) conforme o enunciado)
+    // Tempo de permanência na base
     int tpb = 15 + h->paciencia * aleat(1, 20);
 
     agenda_evento(w, h, b, SAI, tpb);
 
-    printf("%6d: ENTRA HEROI %2d BASE %d (%2d/%2d) SAI %d\n", w->relogio, h->id, b->id,
-           cjto_card(b->presentes), b->lotacao, w->relogio + tpb);
+    printf("%6d: ENTRA HEROI %2d BASE %d (%2d/%2d) SAI %d\n", w->relogio, 
+    h->id, b->id, cjto_card(b->presentes), b->lotacao, w->relogio + tpb);
 
     destroi_evento(ev);
 }
@@ -131,16 +149,15 @@ void sai (mundo_t *w, evento_t *ev)
 {
     heroi_t *h = ev->campo1;
     base_t *b = ev->campo2;
+    base_t *d = base_aleat(w);
 
     cjto_retira(b->presentes, h->id);
-
-    base_t *d = base_aleat(w);
 
     agenda_evento(w, h, d, VIAJA, AGORA);
     agenda_evento(w, b, NULL, AVISA, AGORA);
 
-    printf("%6d: SAI HEROI %2d BASE %d (%2d/%2d)\n", w->relogio, h->id, b->id,
-           cjto_card(b->presentes), b->lotacao);
+    printf("%6d: SAI HEROI %2d BASE %d (%2d/%2d)\n", w->relogio, 
+    h->id, b->id, cjto_card(b->presentes), b->lotacao);
 
     destroi_evento(ev);
 }
@@ -155,8 +172,8 @@ void viaja (mundo_t *w, evento_t *ev)
 
     agenda_evento(w, h, d, CHEGA, duracao);
 
-    printf("%6d: VIAJA HEROI %2d BASE %d BASE %d DIST %d VEL %d CHEGA %d\n", w->relogio, h->id,
-    h->base, d->id, dist, h->velocidade, w->relogio + duracao);
+    printf("%6d: VIAJA HEROI %2d BASE %d BASE %d DIST %d VEL %d CHEGA %d\n", w->relogio, 
+    h->id, h->base, d->id, dist, h->velocidade, w->relogio + duracao);
 
     destroi_evento(ev);
 }
@@ -164,12 +181,11 @@ void viaja (mundo_t *w, evento_t *ev)
 void morre (mundo_t *w, evento_t *ev)
 {
     heroi_t *h = ev->campo1;
-    missao_t *m = ev->campo2;
+    missao_t *m = ev->campo2;           // Passo a missao no campo do evento pra usar no print
     base_t *b = w->bases[h->base];
 
     cjto_retira(b->presentes, h->id);
-    lef_retira_heroi(w->lef, h);
-
+    lef_limpeza_heroi(w->lef, h, 0);    // Passo 0 para retirar todos os eventos
     h->vivo = 0;
 
     agenda_evento(w, b, NULL, AVISA, AGORA);
@@ -183,13 +199,20 @@ void morre (mundo_t *w, evento_t *ev)
 void missao (mundo_t *w, evento_t *ev)
 {
     missao_t *m = ev->campo1;
-    base_t *bmp = encontra_BMP (w, m);
+    struct cjto_t *habs = NULL;                 // cjto de habs usadas pela base, pra usar no print
+    base_t *bmp = encontra_BMP (w, m, &habs);
     heroi_t *h;
 
     w->estats->m_tentativas[m->id]++;
 
+    printf("%6d: MISSAO %d TENT %d HAB REQ: [ ", w->relogio, m->id, w->estats->m_tentativas[m->id]);
+    cjto_imprime(m->habilidades);
+    printf(" ]\n");
+
+    // Se não achou nenhuma base
     if (!bmp) {
         agenda_evento(w, m, NULL, MISSAO, 24*60);
+        printf("%6d: MISSAO %d IMPOSSIVEL\n", w->relogio, m->id);
         destroi_evento(ev);
         return;
     }
@@ -200,12 +223,20 @@ void missao (mundo_t *w, evento_t *ev)
         if (cjto_pertence(bmp->presentes, h->id) > 0 && h->estado) {
             int risco = m->perigo / (h->paciencia + h->xp + 1);
 
+            // Ternário q verifica se o H morre ou não
             (risco > aleat(0, 30)) ? agenda_evento(w, h, m, MORRE, AGORA) : h->xp++;
         }   
     }
 
     w->estats->bases[bmp->id]->m_cumpridas++;
     w->estats->m_cumpridas++;
+
+    printf("%6d: MISSAO %d CUMPRIDA BASE %d HABS: [ ", w->relogio, m->id, bmp->id);
+    cjto_imprime(habs);
+    printf(" ]\n");
+
+    cjto_destroi(habs);     // Tem q destruir o cjto de habs da usados pela base
+
     destroi_evento(ev);
 }
 
@@ -226,24 +257,7 @@ void invade (mundo_t *w, evento_t *ev)
             h->estado = 0;
             agenda_evento(w, h, NULL, RECUPERA_HEROI, inv->penalidadeHeroi);
 
-            // Varredura segura da LEF
-            struct lefnodo_t *aux = w->lef->prim;
-
-            while (aux != NULL && aux->prox != NULL) {
-                // Verifica se o evento é do tipo SAI e pertence ao herói h
-                if ((aux->prox->tipo == SAI) && (aux->prox->item->campo1 == h)) {
-                    struct lefnodo_t *aux2 = aux->prox;
-                    aux->prox = aux2->prox; // Remove da lista
-
-                    destroi_evento(aux2->item);
-                    free(aux2);
-                    // IMPORTANTE: Não avançamos 'aux' aqui, pois o novo aux->prox 
-                    // precisa ser verificado na próxima volta do loop.
-                } else {
-                    aux = aux->prox; // Só avança se não removeu
-                }
-            }
-            
+            lef_limpeza_heroi(w->lef, h, SAI);      // Retira só um evento do tipo SAI desse H
             agenda_evento(w, h, b, SAI, AGORA);
         }
     }
@@ -252,6 +266,13 @@ void invade (mundo_t *w, evento_t *ev)
     agenda_evento(w, b, NULL, RECONSTROI_BASE, inv->penalidadeBase);
 
     w->estats->inv_realizadas++;
+
+    printf("%6d: INVADE BASE %d INVADE %d\n", w->relogio, b->id, inv->id);
+    printf("%6d: INVADE %d BASE %d HEROIS INATIVOS [ ", w->relogio, inv->id, b->id);
+    cjto_imprime(b->presentes);
+    printf(" ]\n");
+    printf("%6d: INVADE %d BASE %d INATIVA\n", w->relogio, inv->id, b->id);
+
     destroi_evento(ev);
 }
 
@@ -315,42 +336,47 @@ void fim (mundo_t *w, evento_t *ev)
     destroi_evento(ev);
 }
 
-// AUXILIARES:
-base_t *encontra_BMP (mundo_t *w, missao_t *m)
+/* ------------------------------------------------------------------ */
+/* AXULIARES                                                          */
+/* ------------------------------------------------------------------ */
+
+base_t *encontra_BMP (mundo_t *w, missao_t *m, struct cjto_t **habs)
 {
     base_t *bases[w->nBases];
     int dists[w->nBases];
  
+    // Inializa os dois vetores, um de bases e um com suas respectivas distâncias até a missão
     for (int i = 0; i < w->nBases; i++) {
         bases[i] = w->bases[i];
         dists[i] = dist_cartesiana(bases[i]->loc, m->loc);
     }
  
+    // Ordenada os dois vetores com base no de dists
     insertionSortDuplo(bases, dists, w->nBases);
  
     heroi_t *h;
  
     for (int i = 0; i < w->nBases; i++) {
-        // Conjunto de habilidades NOVO para cada base
         struct cjto_t *hab_totais = cjto_cria(w->nHabilidades);
  
         for (int j = 0; j < w->nHerois; j++) {
             h = w->herois[j];
  
             if (cjto_pertence(bases[i]->presentes, h->id) > 0 && h->estado) {
-                struct cjto_t *novo = cjto_uniao(hab_totais, h->habilidades);
+                struct cjto_t *temp = cjto_uniao(hab_totais, h->habilidades);
                 cjto_destroi(hab_totais);
-                hab_totais = novo;
+                hab_totais = temp;          // Usa esse temp pra poder destruir o hab totais antigos, já q o união cria um cjto novo
             }
         }
- 
-        int ok = cjto_contem(hab_totais, m->habilidades);
-        cjto_destroi(hab_totais);
- 
-        if (ok)
+
+        if (cjto_contem(hab_totais, m->habilidades) && bases[i]->estado) { 
+            *habs = hab_totais;                 // Habs da base selecionada, pra usar no print
             return bases[i];
+        }
+        cjto_destroi(hab_totais);
     }
  
+    // Se não achou nenhuma base, retorna NULL
     return NULL;
 }
 

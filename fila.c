@@ -4,7 +4,6 @@
 #include "fila.h"
 
 // Cria uma fila vazia.
-// Retorno: ponteiro para a fila criada ou NULL se erro.
 struct fila_t *fila_cria ()
 {
   struct fila_t *fila = malloc (sizeof(struct fila_t));
@@ -16,7 +15,6 @@ struct fila_t *fila_cria ()
 }
 
 // Libera todas as estruturas de dados da fila, inclusive os itens.
-// Retorno: NULL.
 struct fila_t *fila_destroi (struct fila_t *f)
 {
   if (!f)
@@ -36,9 +34,7 @@ struct fila_t *fila_destroi (struct fila_t *f)
   return NULL;
 }
 
-// Insere o item no final da fila (politica FIFO).
-// Inserir duas vezes o mesmo item (o mesmo ponteiro) é um erro.
-// Retorno: número de itens na fila após a operação ou -1 se erro.
+// Insere o item no final da fila.
 int fila_insere (struct fila_t *f, int item)
 {
   if (!f || !item)
@@ -60,9 +56,10 @@ int fila_insere (struct fila_t *f, int item)
   nodo->item = item;
   nodo->prox = NULL;
 
-  // Se a fila estiver vazia, o nodo e o primeiro; senao vai depois do ultimo
+  // Se a fila estiver vazia, o nodo novo é o primeiro
   if (!f->prim)
     f->prim = nodo;
+  // Se não, vai dps do último
   else
     f->fim->prox = nodo;
 
@@ -72,7 +69,6 @@ int fila_insere (struct fila_t *f, int item)
 }
 
 // Retira o primeiro item da fila e o devolve
-// Retorno: ponteiro para o item retirado ou -1 se fila vazia ou erro.
 int fila_retira (struct fila_t *f)
 {
   if (!f || fila_tamanho(f) <= 0)
@@ -89,13 +85,12 @@ int fila_retira (struct fila_t *f)
     f->fim = NULL;
 
   int item = aux->item;
-  // Libera a memoria do nodo apos salvar seu valor
+
   free(aux);
   return item;
 }
 
 // Informa o número de itens na fila.
-// Retorno: N >= 0 ou -1 se erro.
 int fila_tamanho (struct fila_t *f)
 {
   if (!f)
@@ -103,9 +98,7 @@ int fila_tamanho (struct fila_t *f)
   return (f->num < 0) ? -1 : f->num;
 }
 
-// Imprime o conteúdo da fila no formato "(item) (item) ..."
-// Como o item é um void *, imprime-se o seu endereco.
-// Espaco apenas entre os valores e sem nova linha no final.
+// Imprime o conteúdo da fila.
 void fila_imprime (struct fila_t *f)
 {
   if (!f)
@@ -114,7 +107,7 @@ void fila_imprime (struct fila_t *f)
   struct fila_nodo_t *aux = f->prim;
 
   while (aux) {
-    printf ("(%d)", aux->item);
+    printf ("%d", aux->item);
 
     // Só da espaço se tiver prox item
     if (aux->prox)

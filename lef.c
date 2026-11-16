@@ -11,11 +11,9 @@
 #include <string.h>
 #include "lef.h"
 #include "entidades.h"
-#include "mundo.h"
 #include "eventos.h"
 
 // Cria uma fila vazia.
-// Retorno: ponteiro para a fila criada ou NULL se erro.
 struct lef_t *lef_cria ()
 {
   struct lef_t *fila = malloc (sizeof(struct lef_t));
@@ -29,7 +27,6 @@ struct lef_t *lef_cria ()
 }
 
 // Libera todas as estruturas de dados da fila, inclusive os itens.
-// Retorno: NULL.
 struct lef_t *lef_destroi (struct lef_t *f)
 {
   if (!f)
@@ -51,10 +48,6 @@ struct lef_t *lef_destroi (struct lef_t *f)
 }
 
 // Insere o item na fila, mantendo-a ordenada por prioridades crescentes.
-// Itens com a mesma prioridade devem respeitar a politica FIFO (retirar
-// na ordem em que inseriu).
-// Inserir duas vezes o mesmo item (o mesmo ponteiro) é um erro.
-// Retorno: número de itens na fila após a operação ou -1 se erro.
 int lef_insere (struct lef_t *f, void *item, int tipo, int prio)
 {
   if (!f || !item)
@@ -107,8 +100,6 @@ int lef_insere (struct lef_t *f, void *item, int tipo, int prio)
 }
 
 // Retira o primeiro item da fila e o devolve; o tipo e a prioridade
-// do item são devolvidos nos parâmetros "tipo" e "prio".
-// Retorno: ponteiro para o item retirado ou NULL se fila vazia ou erro.
 void *lef_retira (struct lef_t *f, int *tipo, int *prio)
 {
   if (!f || !tipo || !prio || lef_tamanho(f) <= 0)
@@ -123,14 +114,12 @@ void *lef_retira (struct lef_t *f, int *tipo, int *prio)
   *prio = aux->prio;
   void *item = aux->item;
   
-  // Libera a mémoria do nodo após salvar seus valores
   free(aux);
   
   return item;
 }
 
 // Informa o número de itens na fila.
-// Retorno: N >= 0 ou -1 se erro.
 int lef_tamanho (struct lef_t *f)
 {
   if (!f)
@@ -139,9 +128,7 @@ int lef_tamanho (struct lef_t *f)
   return (f->num < 0) ? -1 : f->num;
 }
 
-// Imprime o conteúdo da fila no formato "(tipo prio) (tipo prio) ..."
-// Para cada item deve ser impresso seu tipo e sua prioridade, com um
-// espaço entre valores, sem espaços antes ou depois e sem nova linha.
+// Imprime o conteúdo da fila no formato "tipo prio tipo prio ..."
 void lef_imprime (struct lef_t *f)
 {
   if (!f)
@@ -150,7 +137,7 @@ void lef_imprime (struct lef_t *f)
   struct lefnodo_t *aux = f->prim;
 
   while (aux) {
-    printf ("(%d %d)", aux->tipo, aux->prio);
+    printf ("%d %d", aux->tipo, aux->prio);
 
     // Só da espaço se tiver prox item
     if (aux->prox)
@@ -160,7 +147,9 @@ void lef_imprime (struct lef_t *f)
   }
 }
 
-void lef_retira_heroi (struct lef_t *f, heroi_t *h)
+// Recebe um herói H, um tipo de evento
+// Se o evento for falso (0), retira todos os eventos relacionados a esse H
+void lef_limpeza_heroi(struct lef_t *f, heroi_t *h, int tipo)
 {
   if (!f || !h)
     return;
@@ -172,8 +161,7 @@ void lef_retira_heroi (struct lef_t *f, heroi_t *h)
     struct lefnodo_t *prox = aux->prox;
     evento_t *ev = aux->item;
 
-    if (ev->campo1 == h) {
-      // desliga o nodo da lista
+    if (ev->campo1 == h && (!tipo || aux->tipo == tipo)) {
       if (ant)
         ant->prox = prox;
       else
@@ -182,8 +170,12 @@ void lef_retira_heroi (struct lef_t *f, heroi_t *h)
       f->num--;
       destroi_evento(ev);
       free(aux);
-      // ant continua o mesmo
-    } else
+
+      if (tipo)   // Se realmente for um tipo, quebra o laço após retirar só um
+        break;
+    } 
+    
+    else
       ant = aux;
 
     aux = prox;

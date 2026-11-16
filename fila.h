@@ -1,11 +1,10 @@
 #ifndef FILA
 #define FILA
 
-#include "entidades.h"
 // descreve um nodo da fila 
 struct fila_nodo_t
 {
-	int item;			// item associado ao nodo
+	int item;					// item associado ao nodo
 	struct fila_nodo_t *prox;	// próximo nodo
 };
 
@@ -14,7 +13,7 @@ struct fila_t
 {
 	struct fila_nodo_t *prim ;	// primeiro nodo da fila
 	struct fila_nodo_t *fim;	// último nodo da fila
-	int num ;			// número de itens na fila
+	int num ;					// número de itens na fila
 } ;
 
 // Cria uma fila vazia.
